@@ -37,6 +37,9 @@ const uint8_t RATE_SD = 1000;          // 1Hz, save to sd
 // SENSOR RELATED
 const float SEA_LEVEL = 1013.25;       // sealevel pressure in hPa
 
+// TRANSMITTER / RADIO
+
+
 /***********************************************************************
  * CONTANTS AND VARIABLES
  **********************************************************************/
