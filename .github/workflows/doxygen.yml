@@ -18,11 +18,10 @@
 name: Build and Publish Doxygen
 
 # Will only modify and read when changes to main branch happen
-# uncomment this section if you want to reenable doxygen
-# on:
-#   push:
-#     branches: [ main ]
-#   workflow_dispatch:
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 # Giving actions permissions
 permissions:
@@ -38,6 +37,9 @@ concurrency:
 # What YML will do
 jobs:
   build-docs:
+    # Hard disable: this job never executes unless someone changes this to true
+    if: ${{ false }}
+
     runs-on: ubuntu-latest
 
     steps:
