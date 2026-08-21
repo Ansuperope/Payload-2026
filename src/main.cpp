@@ -20,6 +20,9 @@
 #include <Adafruit_BME280.h>    // humidity: https://github.com/boschsensortec/BME280_SensorAPI
 #include <Seeed_HM330X.h>       // dust: https://github.com/Seeed-Studio/Seeed_PM2_5_sensor_HM3301
 #include <Adafruit_LTR390.h>    // uv: https://github.com/adafruit/Adafruit_LTR390/tree/master
+#include "DustSensor.h"
+#include "UVSensor.h"
+
 
 #endif
 
@@ -42,9 +45,13 @@ const float SEA_LEVEL = 1013.25;       // sealevel pressure in hPa
  **********************************************************************/
 // CSV FILES
 CSV fileHumid("humidity.csv");
+CSV fileDust("dust.csv"); // added for dust sensor
+CSV fileUV("uv.csv"); // added for uv sensor
 
 // SENSOR OBJECTS
 Adafruit_BME280 sensorHumid; // humidity, temp, pressure
+DustSensor sensorDust;     // dust sensor 
+UVSensor sensorUV;         // uv sensor
 
 // COUNTER
 uint8_t counter_ram = 0;    // index for ram buffer
@@ -67,7 +74,25 @@ struct packetRam {
   float bmeHumidity;
   float bmePressure; 
   float bmeTemp;
+
+   // ***************** DUST *****************
+  uint16_t dustPM1_0; /**< PM1.0 (ug/m^3) */
+  uint16_t dustPM2_5; /**< PM2.5 (ug/m^3) */
+  uint16_t dustPM10;  /**< PM10 (ug/m^3) */
+  bool dustOK;        /**< Valid reading */
+  uint8_t dustError;  /**< Error code */
 }; // END packetRam
+
+
+// ***************** DUST *****************
+// Packet for UV sensor
+struct packetUV {
+  float uvTime;       // time read data
+  float uvIndex;      // UV index
+  float uvIlluminance; // UV illuminance
+  bool uvOK;          // Valid reading
+  uint8_t uvError;    // Error code
+}; // END packetUV
 
 /***********************************************************************
  * BUFFERS
@@ -138,9 +163,18 @@ void loop() {
     BufferRam[counter_ram].bmeTemp = sensorHumid.readTemperature();
 
     // INPUT CODE TO READ SENSORS
+    DustPacket dust = sensorDust.read();
+
+    BufferRam[counter_ram].dustPM1_0 = dust.pm1_0;
+    BufferRam[counter_ram].dustPM2_5 = dust.pm2_5;
+    BufferRam[counter_ram].dustPM10 = dust.pm10;
+    BufferRam[counter_ram].dustOK = dust.dustOK;
+    BufferRam[counter_ram].dustError = dust.errorCode;
     
     // INCREMENT INDEX FOR NEXT READ
     counter_ram++;
+    lastBufferRam = currentTime;
+    
   } // END if
 
   /*********************************************************************
@@ -165,6 +199,14 @@ void loop() {
                             BufferRam[indexSave].bmeHumidity,
                             BufferRam[indexSave].bmePressure,
                             BufferRam[indexSave].bmeTemp);
+      
+      fileDust.writeToFile(
+                            BufferRam[indexSave].ramTime,
+                            BufferRam[indexSave].dustPM1_0,
+                            BufferRam[indexSave].dustPM2_5,
+                            BufferRam[indexSave].dustPM10,
+                            BufferRam[indexSave].dustOK,
+                            BufferRam[indexSave].dustError);
 
       // INCREMENT COUNTER
       indexSave++;
